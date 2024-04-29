@@ -26,7 +26,7 @@
 
 const mockProductName =  `DOUBLE A Copier Paper A3 80 gsm. (500 Sheets)`
 const mockProductDescription = `Moderately bright white copier paper from farm dike Thick papers allow for double-sided printing for added cost effectiveness. Bright white color of paper for outstanding print quality Extend lifetime of photocopier and provide longer time of storage`
-const mockProductImgUrl = `https://cdn.discordapp.com/attachments/436719545647104010/1234159428555641014/1958581_459964740801095_1983117730_n.png?ex=662fb809&is=662e6689&hm=90824d14ca16e03d3ceac180efa0b57f707035390f83711637a9ef489cb93b43&`
+const mockProductImgUrl = `https://cdn.discordapp.com/attachments/443780456479981569/1124750180374302760/Screenshot_20230701_144623_Instagram.jpg?ex=66307e7b&is=662f2cfb&hm=615e218efa8e0320217e053a43c1266213bdd4ab7368638a747f68e45e52977a&`
 
 export default {
     data() {

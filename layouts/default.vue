@@ -7,8 +7,7 @@
       >
           <v-list-item title="My Application" subtitle="Vuetify"></v-list-item>
           <v-divider></v-divider>
-          <v-list-item prepend-icon="mdi-home" link to="/" title="หน้าหลัก"></v-list-item>
-          <v-list-item prepend-icon="mdi-pen" link to="/acquisitions" title="เบิกใช้วัสดุ"></v-list-item>
+          <v-list-item prepend-icon="mdi-pen" link to="/" title="เบิกใช้วัสดุ"></v-list-item>
           <v-list-item prepend-icon="mdi-file-chart" link to="/history" title="ประวัติการเบิกใช้"></v-list-item>
 
       <template v-slot:append>
