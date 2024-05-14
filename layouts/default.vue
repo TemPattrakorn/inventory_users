@@ -6,7 +6,7 @@
       permanent
       >
           <v-list-item
-              prepend-avatar="https://cdn.discordapp.com/attachments/436719545647104010/1234881053315960832/AA164681-ADD1-47F2-8937-02AEAAA8D2C2_4_5005_c.jpeg?ex=6632581a&is=6631069a&hm=b9776725c8c04cb6cf53ec6241a4846cc7435d73f004bd8925f55f4a7b2c0234&"
+              prepend-avatar="https://cdn.discordapp.com/attachments/443780456479981569/1161213148477538314/1696925163631.jpg?ex=66446d04&is=66431b84&hm=2411f2cca08bf883bc0196f451052c0df1266ba9155cbfb0a931e489db208e53&"
               title="Tem Pattrakorn"
               subtitle="6334453323"
           ></v-list-item>
@@ -28,6 +28,16 @@
 
           <template v-slot:append>
             <div class="pa-2">
+              <v-btn
+                  block
+                  color="red"
+                  variant="text"
+                  link to="/profile"
+              >
+                Profile
+              </v-btn>
+            </div>
+            <div class="pa-2">
               <v-btn block>
                 Logout
               </v-btn>
@@ -35,6 +45,7 @@
           </template>
 
       </v-navigation-drawer>
+
       <v-main style="height: 5000px"
       >
         <slot />
@@ -42,3 +53,5 @@
   </v-app>
 </template>
 
+<script setup lang="ts">
+</script>
