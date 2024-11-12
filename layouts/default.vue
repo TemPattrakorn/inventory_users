@@ -6,7 +6,7 @@
       permanent
       >
           <v-list-item
-              prepend-avatar="https://cdn.discordapp.com/attachments/443780456479981569/1161213148477538314/1696925163631.jpg?ex=66446d04&is=66431b84&hm=2411f2cca08bf883bc0196f451052c0df1266ba9155cbfb0a931e489db208e53&"
+              prepend-avatar="~/public/Mailbox 6649.jpg"
               title="Tem Pattrakorn"
               subtitle="6334453323"
           ></v-list-item>
