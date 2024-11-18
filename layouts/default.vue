@@ -25,6 +25,18 @@
               title="ประวัติการเบิกใช้"
               value = "history"
           ></v-list-item>
+          <v-list-item
+              prepend-icon="mdi-test-tube"
+              link to="/test_get"
+              title = "test_get"
+              value = "test_get"
+          ></v-list-item>
+          <v-list-item
+            prepend-icon="mdi-test-tube-empty"
+            link to="/test_post"
+            title = "test_post"
+            value = "test_post"
+          ></v-list-item>
 
           <template v-slot:append>
             <div class="pa-2">
