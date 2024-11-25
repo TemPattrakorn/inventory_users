@@ -1,4 +1,5 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
@@ -14,7 +15,7 @@ export default defineNuxtConfig({
         config.plugins.push(vuetify({ autoImport: true }))
       })
     },
-    '@nuxtjs/strapi', // Add the Strapi module here
+      '@nuxtjs/strapi', // Add the Strapi module here
     //...
   ],
 
@@ -23,6 +24,17 @@ export default defineNuxtConfig({
     prefix: '/api',
     url: 'http://localhost:1337'
   },
+
+  /*
+  apollo: {
+    clients: {
+      default: {
+        httpEndpoint: 'https://spacex-production.up.railway.app'
+      }
+    },
+  },
+
+   */
 
   vite: {
     vue: {

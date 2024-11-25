@@ -25,7 +25,7 @@
       </v-col>
       <v-col cols="3">
         <v-card class="pa-4" style="position: sticky;top: 10%">
-          Seleceted Side Bar
+          Selected Side Bar
         </v-card>
       </v-col>
     </v-row>
