@@ -3,11 +3,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-
-  build: {
-    transpile: ['vuetify'],
-  },
-
+  build: { transpile: ['vuetify'] },
   modules: [
     (_options, nuxt) => {
       nuxt.hooks.hook('vite:extendConfig', (config) => {
@@ -15,34 +11,17 @@ export default defineNuxtConfig({
         config.plugins.push(vuetify({ autoImport: true }))
       })
     },
-      '@nuxtjs/strapi', // Add the Strapi module here
-    //...
   ],
-
-  strapi: {
-    version: 'v5',
-    prefix: '/api',
-    url: 'http://localhost:1337'
-  },
-
-  /*
-  apollo: {
-    clients: {
-      default: {
-        httpEndpoint: 'https://spacex-production.up.railway.app'
-      }
-    },
-  },
-
-   */
-
   vite: {
     vue: {
-      template: {
-        transformAssetUrls,
-      },
+      template: { transformAssetUrls },
     },
   },
-
+  runtimeConfig: {
+    strapiApiToken: process.env.STRAPI_API_TOKEN,
+    public: {
+      strapiUrl: 'http://localhost:1337'
+    }
+  },
   compatibilityDate: '2024-11-18',
 })

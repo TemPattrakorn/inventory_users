@@ -4,29 +4,15 @@
       Result of <code>https://dummyjson.com/products/</code>
 
       <v-col cols="12" sm="2">
-        <h5>Stacked</h5>
-        <v-number-input
-            v-model="id"
-            :min="1"
-            control-variant="stacked"
-            label="id"
-            inset
-        ></v-number-input>
+        <h5></h5>
+
+        <v-text-field
+            v-model="documentId"
+            label="documentId"
+        ></v-text-field>
+
       </v-col>
 
-    </p>
-    <p class="flex items-center gap-2">
-
-      <v-btn
-          :disabled="!canDecrease"
-          @click="canDecrease ? id-- : null"
-      >
-        Previous
-      </v-btn>
-      -
-      <v-btn @click="id++">
-        Next
-      </v-btn>
     </p>
 
     <p v-if="pending">
@@ -40,18 +26,10 @@
 
 <script setup lang="ts">
 
+const documentId = ref(0)
 const id = ref(1)
-const { data: product, pending, error } = await useFetch(() => `https://dummyjson.com/products/${id.value}`)
+const { data: product, pending, error } = await useFetch(() => `http://localhost:1337/api/items/${documentId.value}`)
 
-/* Same as:
-const { data: product, pending, error } = await useAsyncData(() => {
-  return $fetch(`https://dummyjson.com/products/${id.value}`)
-}, {
-  watch: [id]
-})
-*/
-
-const canDecrease = computed(() => id.value > 1)
 
 </script>
 
