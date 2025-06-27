@@ -12,16 +12,19 @@ export default defineNuxtConfig({
       })
     },
   ],
+
   vite: {
     vue: {
       template: { transformAssetUrls },
     },
   },
+
   runtimeConfig: {
     strapiApiToken: process.env.STRAPI_API_TOKEN,
     public: {
       strapiUrl: 'http://localhost:1337'
     }
   },
+
   compatibilityDate: '2024-11-18',
 })

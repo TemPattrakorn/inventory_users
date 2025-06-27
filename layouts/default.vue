@@ -37,6 +37,18 @@
             title = "test_post"
             value = "test_post"
           ></v-list-item>
+        <v-list-item
+            prepend-icon="mdi-test-tube-empty"
+            link to="/test_update"
+            title = "test_update"
+            value = "test_update"
+        ></v-list-item>
+        <v-list-item
+            prepend-icon="mdi-test-tube-empty"
+            link to="/test_delete"
+            title = "test_delete"
+            value = "test_delete"
+        ></v-list-item>
 
           <template v-slot:append>
             <div class="pa-2">

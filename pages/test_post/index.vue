@@ -1,76 +1,96 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <p class="flex items-center gap-2">
-      POST
+  <v-container>
+    <v-card>
+      <v-card-title>Submit Name and Quantity</v-card-title>
+      <v-card-text>
+        <v-form ref="formRef" v-model="isFormValid">
+          <v-text-field
+              v-model="formData.name"
+              label="Name"
+              placeholder="Enter name"
+              required
+              :rules="[rules.required]"
+          ></v-text-field>
 
-      <v-col cols="12" sm="2">
-        <h5></h5>
-        <v-text-field
-            v-model="Name"
-            label="Name"
-        ></v-text-field>
-
-        <h5></h5>
-        <v-text-field
-            label="quantity"
-        ></v-text-field>
-
-      </v-col>
-
-    </p>
-    <p class="flex items-center gap-2">
-
-      <v-btn
-          @click="submitForm"
-      >
-        Submit
-      </v-btn>
-    </p>
-
-    <h2></h2>
-    <p v-if="pending">
-      Fetching...
-    </p>
-    <pre v-else-if="error">{{ error }}</pre>
-    <pre v-else>{{ product }}</pre>
-
-    </div>
-    <h2></h2>
-    <div>
-      <h1>Strapi API Test</h1>
-      <div v-if="loading">Loading...</div>
-      <div v-else-if="error">Error: {{ error }}</div>
-      <pre v-else>{{ data }}</pre>
-    </div>
-
+          <v-text-field
+              v-model="formData.quantity"
+              label="Quantity"
+              placeholder="Enter quantity"
+              type="number"
+              required
+              :rules="[rules.required, rules.isNumber]"
+          ></v-text-field>
+        </v-form>
+        <v-alert v-if="message" type="info" class="mt-4">{{ message }}</v-alert>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn :disabled="loading || !isFormValid" color="primary" @click="submitForm">
+          <v-progress-circular
+              v-if="loading"
+              indeterminate
+              size="20"
+              color="white"
+          ></v-progress-circular>
+          <span v-else>Submit</span>
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-container>
 </template>
 
-<script setup lang="ts">
-const { $strapi } = useNuxtApp()
-const data = ref(null)
-const error = ref<string | null>(null)
-const loading = ref(true)
+<script setup>
+import { ref } from "vue";
 
-onMounted(async () => {
-  try {
-    const response = await $strapi.get('/api/items')
-    data.value = response.data
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      error.value = err.message
-    } else {
-      error.value = 'An unknown error occurred'
+const formData = ref({
+  name: "",
+  quantity: 0,
+});
+
+const loading = ref(false);
+const message = ref("");
+const isFormValid = ref(false);
+const formRef = ref(null);
+
+const rules = {
+  required: (value) => !!value || "This field is required.",
+  isNumber: (value) => !isNaN(value) || "Must be a number.",
+};
+
+const submitForm = async () => {
+  if (formRef.value.validate()) {
+    loading.value = true;
+    message.value = "";
+
+    try {
+      const response = await $fetch("http://localhost:1337/api/items/", {
+        method: "POST",
+        body: {
+          data: {
+            Name: formData.value.name,
+            Quantity: formData.value.quantity,
+          },
+        },
+      });
+
+      message.value = `Success: ${response.message}`;
+      formData.value.name = "";
+      formData.value.quantity = 0;
+    } catch (error) {
+      message.value = `Error: ${error.message}`;
+    } finally {
+      loading.value = false;
     }
-  } finally {
-    loading.value = false
   }
-})
+};
 </script>
 
-
 <style scoped>
-h2 {
-  margin-top: 20px;
-  margin-left: 20px;
+.v-container {
+  display: flex;
+  justify-content: center;
+}
+
+.v-card-actions {
+  justify-content: flex-end;
 }
 </style>

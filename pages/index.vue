@@ -8,7 +8,7 @@
                           single-line hide-details prepend-inner-icon="mdi-magnify" />
           </v-col>
           <v-col cols="3">
-            <v-select :items="mockCatagory"
+            <v-select :items="mockCategory"
                       rounded="pill"
                       density="compact"
                       variant="solo-filled"
@@ -18,13 +18,13 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col v-for="(item, index) in Array(4)" :key="index" cols="12">
+          <v-col v-for="item in items" :key="item.id" cols="12">
             <AcquisitionsCard />
           </v-col>
         </v-row>
       </v-col>
       <v-col cols="3">
-        <v-card class="pa-4" style="position: sticky;top: 10%">
+        <v-card>
           Selected Side Bar
         </v-card>
       </v-col>
@@ -33,12 +33,31 @@
 </template>
 
 
-<script>
+<script setup lang = "ts">
+import { ref, onMounted } from 'vue';
 
-export default {
-  data: () => ({
-    mockCatagory: ['Foo', 'Bar', 'Fizz', 'Buzz', 'Erh'],
-  }),
-}
+const items = ref<any[]>([]);
+
+// Function to fetch data using GET method
+const fetchData = async () => {
+  try {
+    const response = await fetch('http://localhost:1337/api/items/'); // Replace with your API endpoint
+    if (response.ok) {
+      const data = await response.json();
+      items.value = data.data; // Accessing the items from the 'data' field in the API response
+    } else {
+      console.error('Failed to fetch data');
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+// Fetch data on component mount
+onMounted(() => {
+  fetchData();
+});
+
+const mockCategory: string[] = ['Foo', 'Bar'];
 
 </script>
