@@ -34,6 +34,7 @@
 
 
 <script setup lang = "ts">
+definePageMeta({ middleware: 'auth' })
 import { ref, onMounted } from 'vue';
 
 const items = ref<any[]>([]);

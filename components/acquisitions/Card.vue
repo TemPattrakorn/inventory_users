@@ -8,6 +8,7 @@
             <v-col cols="9" class=" pr-8">
                 <v-card-title class="pt-3">{{ProductName}}</v-card-title>
                 <v-card-text>{{ProductDescription}}</v-card-text>
+                
                 <v-card-acions class="pb-4 ga-6 d-flex justify-end align-center">
                     <p class="text-caption text-medium-emphasis">คงเหลือ {{ProductQuantity}}</p>
                     <v-card class="d-flex rounded-pill" variant="tonal" color="grey-darken-2">
@@ -16,7 +17,8 @@
                             variant="solo"
                             density="compact"
                             rounded="0"
-                            single-line class="centered-input"
+                            single-line 
+                            class="centered-input"
                             hide-details
                         ></v-text-field>
                         <v-btn variant="text" class="rounded-0" style="height: auto;"><v-icon>mdi-plus</v-icon></v-btn>

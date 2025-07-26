@@ -19,10 +19,22 @@ export default defineNuxtConfig({
     },
   },
 
+  plugins: [
+    '~/plugins/firebase.ts',
+  ],
+
   runtimeConfig: {
     strapiApiToken: process.env.STRAPI_API_TOKEN,
     public: {
-      strapiUrl: 'http://localhost:1337'
+      strapiUrl: 'http://localhost:1337',
+      apiUrl: process.env.NUXT_PUBLIC_API_URL,
+      apiToken: process.env.NUXT_PUBLIC_API_TOKEN,
+      firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY
+    }
+  },
+  app: {
+    head: {
+      title: 'Inventory management system',
     }
   },
 
