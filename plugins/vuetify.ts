@@ -3,14 +3,10 @@ import '@mdi/font/css/materialdesignicons.css'
 
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
-import { VNumberInput } from 'vuetify/labs/VNumberInput'
 
 export default defineNuxtPlugin((app) => {
   const vuetify = createVuetify({
     // ... your configuration
-    components: {
-      VNumberInput,
-    },
   })
   app.vueApp.use(vuetify)
 })
