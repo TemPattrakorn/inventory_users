@@ -3,7 +3,7 @@
     <v-row align="center">
       <v-col cols="3" class="d-flex justify-center">
         <v-img 
-          class="rounded-lg"
+          class="rounded-lg ma-2"
           cover 
           height="60px"
           width="60px"

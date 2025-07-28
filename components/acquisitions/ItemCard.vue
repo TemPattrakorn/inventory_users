@@ -11,21 +11,24 @@
                     :src="ProductImgUrl"
                 ></v-img>
             </v-col>
-            <v-col cols="7">
+            <v-col cols="6">
                 <v-card-title class="pt-3">{{ProductName}}</v-card-title>
                 <v-card-text>{{ProductDescription}}</v-card-text>
             </v-col>
-            <v-col cols="4" class="d-flex flex-column justify-center">
+            <v-col cols="2" class="d-flex flex-column justify-center">
+                <p class="text-caption text-medium-emphasis mx-2 text-right">คงเหลือ {{ProductQuantity}} {{ProductUnit}}</p>
+            </v-col>
+            <v-col cols="3" class="d-flex flex-column justify-center">
                     <div class="d-flex align-center gap-2">
-                        <p class="text-caption text-medium-emphasis mx-2">คงเหลือ {{ProductQuantity}}</p>
-                            <v-number-input
-                                v-model="inputQuantity"
-                                control-variant="split"
-                                :min="0" 
-                                :max="ProductQuantity"
-                                :disabled="ProductQuantity <= 0"
-                                class="centered-input ma-2"
-                            ></v-number-input>
+                        <v-number-input
+                            v-model="inputQuantity"
+                            control-variant="stacked"
+                            :min="0" 
+                            :max="ProductQuantity"
+                            :disabled="ProductQuantity <= 0"
+                            class="centered-input ma-2"
+                            inset
+                        ></v-number-input>
                         <v-btn 
                           rounded="lg" 
                           variant="tonal" 
@@ -114,6 +117,7 @@ const availableQuantity = computed(() => {
 });
 
 const ProductQuantity = computed(() => availableQuantity.value);
+const ProductUnit = computed(() => props.item.unit);
 const ProductImgUrl = computed(() => {
     if (props.item.imgpath && props.item.imgpath.length > 0) {
         const image = props.item.imgpath[0];

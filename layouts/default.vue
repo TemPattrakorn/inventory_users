@@ -1,8 +1,7 @@
 <template>
     <v-app>
         <v-navigation-drawer
-        class="bg-blue-grey-darken-3"
-        theme="dark"
+        class="bg-blue-grey"
         >
             <v-list-item class = "my-2"
               :prepend-avatar="userProfile?.photoURL || userProfile?.profilePicture || ''"

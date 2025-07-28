@@ -38,10 +38,10 @@
       </v-col>
       <v-col cols="3">
         <v-card class="pa-4" rounded="lg">
-          <v-card-title class="text-h6 mb-4">ตะกร้าสินค้า</v-card-title>
+          <v-card-title class="text-h6 mb-4">รายการเบิกใช้วัสดุ</v-card-title>
           <div v-if="basket.length === 0" class="text-center text-medium-emphasis">
             <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-cart-outline</v-icon>
-            <p>ไม่มีสินค้าในตะกร้า</p>
+            <p>ไม่มีข้อมูล</p>
           </div>
           <div v-else>
             <BasketItemCard
@@ -51,6 +51,15 @@
               @remove-item="removeItemFromBasket"
             />
             <v-divider class="my-4"></v-divider>
+            <div>
+              <v-textarea
+                v-model="reqDescription"
+                label="หมายเหตุ/เหตุผลในการเบิก"
+                rows="3"
+                maxlength="255"
+                auto-grow
+              ></v-textarea>
+            </div>
             <div class="text-center">
               <v-btn 
                 color="primary" 
@@ -114,10 +123,14 @@ const searchQuery = ref('');
 const selectedCategory = ref('');
 const categories = ref<string[]>([]);
 const basket = ref<BasketItem[]>([]);
+const reqDescription = ref('');
 
 // Computed property for filtered items based on search query and category
 const filteredItems = computed(() => {
   let filtered = items.value;
+  
+  // Filter out items with stockqnt = 0
+  filtered = filtered.filter(item => item.stockqnt > 0);
   
   // Filter by search query
   if (searchQuery.value.trim()) {
@@ -134,21 +147,6 @@ const filteredItems = computed(() => {
     );
   }
   
-  // Sort items: available items first, then items with 0 stock at the bottom
-  filtered.sort((a, b) => {
-    // Calculate available quantity for each item
-    const aBasketItem = basket.value.find(basketItem => basketItem.item.id === a.id);
-    const bBasketItem = basket.value.find(basketItem => basketItem.item.id === b.id);
-    
-    const aAvailable = a.stockqnt - (aBasketItem ? aBasketItem.acquisitionQuantity : 0);
-    const bAvailable = b.stockqnt - (bBasketItem ? bBasketItem.acquisitionQuantity : 0);
-    
-    // If both have same availability, maintain original order
-    if (aAvailable === bAvailable) return 0;
-    
-    // Sort by availability (higher availability first)
-    return bAvailable - aAvailable;
-  });
   
   return filtered;
 });
