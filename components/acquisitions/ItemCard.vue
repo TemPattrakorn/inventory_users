@@ -23,9 +23,17 @@
                                 control-variant="split"
                                 :min="0" 
                                 :max="ProductQuantity"
+                                :disabled="ProductQuantity <= 0"
                                 class="centered-input ma-2"
                             ></v-number-input>
-                        <v-btn rounded="lg" variant="tonal" color="primary" class="ma-2">เพิ่มรายการ</v-btn>
+                        <v-btn 
+                          rounded="lg" 
+                          variant="tonal" 
+                          color="primary" 
+                          class="ma-2"
+                          @click="addToBasket"
+                          :disabled="inputQuantity <= 0"
+                        >เพิ่มรายการ</v-btn>
                     </div>
             </v-col>
         </v-row>
@@ -34,6 +42,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useRuntimeConfig } from '#app';
 
 interface ItemImage {
     id: number;
@@ -58,28 +67,61 @@ interface Item {
     imgpath: ItemImage[] | null;
 }
 
-interface Props {
+interface BasketItem {
     item: Item;
+    acquisitionQuantity: number;
 }
 
+interface Props {
+    item: Item;
+    basketItems?: BasketItem[];
+}
+
+const config = useRuntimeConfig();
+const API_BASE_URL = config.public.apiUrl;
+
 const props = defineProps<Props>();
+
+// Define emit for adding items to basket
+const emit = defineEmits<{
+  'add-to-basket': [item: Item, quantity: number]
+}>();
 
 // Reactive variable for input quantity
 const inputQuantity = ref(0);
 
+// Function to add item to basket
+const addToBasket = () => {
+  if (inputQuantity.value > 0) {
+    emit('add-to-basket', props.item, inputQuantity.value);
+    inputQuantity.value = 0; // Reset input after adding
+  }
+};
+
 // Computed properties to map API data to component properties
 const ProductName = computed(() => props.item.name);
-const ProductQuantity = computed(() => props.item.stockqnt);
 const ProductDescription = computed(() => props.item.description);
+
+// Computed property to get available quantity (stock minus what's already in basket)
+const availableQuantity = computed(() => {
+  if (!props.basketItems) return props.item.stockqnt;
+  
+  const basketItem = props.basketItems.find(basketItem => basketItem.item.id === props.item.id);
+  if (basketItem) {
+    return props.item.stockqnt - basketItem.acquisitionQuantity;
+  }
+  return props.item.stockqnt;
+});
+
+const ProductQuantity = computed(() => availableQuantity.value);
 const ProductImgUrl = computed(() => {
     if (props.item.imgpath && props.item.imgpath.length > 0) {
         const image = props.item.imgpath[0];
         // Use thumbnail if available, otherwise fall back to original URL
-        const baseUrl = 'http://localhost:1337';
         if (image.formats?.thumbnail?.url) {
-            return baseUrl + image.formats.thumbnail.url;
+            return API_BASE_URL + image.formats.thumbnail.url;
         } else if (image.url) {
-            return baseUrl + image.url;
+            return API_BASE_URL + image.url;
         }
     }
     // Fallback to No_image_available.png if no image is available
