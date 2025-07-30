@@ -113,8 +113,8 @@ const userDocumentId = ref('')
 const loadingItems = ref(false)
 
 const headers = [
-  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true },
-  { title: 'วันที่รับ', key: 'pickupTime', sortable: true },
+  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true, width: '150px' },
+  { title: 'วันที่รับ', key: 'pickupTime', sortable: true, width: '150px' },
   { title: 'รายการ', key: 'items', sortable: false },
   { title: 'จำนวน', key: 'quantities', sortable: false },
   { title: 'เหตุผลที่ขอเบิก', key: 'reqDescription', sortable: false },
@@ -240,13 +240,15 @@ const fetchAcquisitionHistory = async () => {
   }
 }
 
-// Function to format date
+// Function to format date with time
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
   const day = date.getDate().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
   const year = date.getFullYear()
-  return `${day}/${month}/${year}`
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${day}/${month}/${year} ${hours}:${minutes}`
 }
 
 // Function to get status color
