@@ -26,7 +26,7 @@
 
         <template v-slot:append>
           <div class="pa-2">
-            <v-btn block @click="logout">
+            <v-btn block color="blue-grey-lighten-5" @click="logout">
               Logout
             </v-btn>
           </div>
