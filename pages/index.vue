@@ -20,7 +20,7 @@
               :items="categories"
               rounded="pill"
               density="compact"
-              variant="solo-filled"
+              variant="solo"
               single-line hide-details
               clearable
             ></v-select>
@@ -122,7 +122,7 @@ interface BasketItem {
 
 const items = ref<Item[]>([]);
 const searchQuery = ref('');
-const selectedCategory = ref('');
+const selectedCategory = ref<string | null>(null);
 const categories = ref<string[]>([]);
 const basket = ref<BasketItem[]>([]);
 const reqDescription = ref('');

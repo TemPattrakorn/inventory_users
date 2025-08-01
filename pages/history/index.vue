@@ -1,6 +1,6 @@
 <template>
   <div style="background-color: #F5F5F5; min-height: 100%">
-    <v-container class="mx-auto pa-4">
+    <v-container class="mx-auto pa-4" style="max-width: 1280px;">
       <v-card rounded="lg">
         <v-card-title class="text-h5 pa-4"
         >ประวัติการเบิกวัสดุ
@@ -19,7 +19,13 @@
           </template>
           
           <template v-slot:item.pickupTime="{ item }">
-            {{ item.pickupTime ? formatDate(item.pickupTime) : '-' }}
+            <span v-if="item.reqstatus === 'completed' && item.pickupTime">
+              {{ formatDate(item.pickupTime) }}
+            </span>
+            <span v-else-if="item.reqstatus === 'cancelled' && item.cancelTime">
+              {{ formatDate(item.cancelTime) }}
+            </span>
+            <span v-else>-</span>
           </template>
           
           <template v-slot:item.reqstatus="{ item }">
@@ -47,24 +53,106 @@
              </div>
            </template>
           
-                     <template v-slot:item.quantities="{ item }">
-             <div>
-               <div v-for="reqItem in item.requisition_items" :key="reqItem.id" class="mb-1">
-                 <span v-if="loadingItems">กำลังโหลด...</span>
-                 <span v-else>{{ reqItem.quantity }} {{ reqItem.unit || '' }}</span>
-               </div>
-             </div>
-           </template>
+                               <template v-slot:item.quantities="{ item }">
+            <div>
+              <div v-for="reqItem in item.requisition_items" :key="reqItem.id" class="mb-1">
+                <span v-if="loadingItems">กำลังโหลด...</span>
+                <span v-else>{{ reqItem.quantity }} {{ reqItem.unit || '' }}</span>
+              </div>
+            </div>
+          </template>
+          
+          <template v-slot:item.actions="{ item }">
+            <v-menu v-if="item.reqstatus === 'awaitPickup'">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                  size="small"
+                  v-bind="props"
+                ></v-btn>
+              </template>
+              <v-list>
+                <v-list-item>
+                  <v-btn
+                    color="error"
+                    variant="text"
+                    @click="openCancelDialog(item)"
+                  >
+                    ยกเลิกคำขอเบิกวัสดุ
+                  </v-btn>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </template>
           
           <template v-slot:no-data>
             <div class="text-center pa-4">
               <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-history</v-icon>
-              <p class="text-medium-emphasis">ไม่พบประวัติการเบิกวัสดุ</p>
+              <p class="text-medium-emphasis">ไม่มีประวัติการเบิกวัสดุ</p>
             </div>
           </template>
         </v-data-table>
       </v-card>
     </v-container>
+    
+    <!-- Cancel Requisition Dialog -->
+    <v-dialog v-model="showCancelDialog" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 pa-4 text-error">
+          <v-icon class="mr-2 text-error">mdi-delete</v-icon>
+          ยกเลิกคำขอเบิกวัสดุ
+        </v-card-title>
+        
+        <v-card-text>
+          <div>
+            <p class="text-body-2 mb-4">วันที่ขอเบิก: {{ selectedItemToCancel ? formatDate(selectedItemToCancel.createdAt) : '' }}</p>
+          </div>
+          
+          <v-divider class="mb-3"/>
+          
+          <div v-if="selectedItemToCancel">
+            <h6 class="text-h6 mb-2">รายการวัสดุในคำขอเบิก:</h6>
+            <v-list density="compact" class="bg-grey-lighten-4 rounded">
+              <v-list-item
+                v-for="(reqItem, index) in selectedItemToCancel.requisition_items"
+                :key="reqItem.id"
+                :class="{ 'border-b': index < selectedItemToCancel.requisition_items.length - 1 }"
+              >
+                <v-list-item-title class="text-body-2">
+                  {{ reqItem.itemName || 'ไม่พบชื่อรายการ' }}
+                </v-list-item-title>
+                
+                <template v-slot:append>
+                  <v-chip size="small">
+                    {{ reqItem.quantity }} {{ reqItem.unit || '' }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </v-list>
+          </div>
+        </v-card-text>
+        
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="grey"
+            variant="outlined"
+            @click="closeCancelDialog"
+          >
+            ยกเลิก
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            @click="confirmCancelRequisition"
+            :loading="cancelLoading"
+          >
+            ยืนยัน
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -105,6 +193,7 @@ interface Requisition {
   publishedAt: string
   reqDescription: string
   pickupTime: string | null
+  cancelTime?: string | null
   inventory_user: InventoryUser
   requisition_items: RequisitionItem[]
 }
@@ -120,15 +209,18 @@ const headers = [
   { title: 'รายการ', key: 'items', sortable: false },
   { title: 'จำนวน', key: 'quantities', sortable: false },
   { title: 'เหตุผลที่ขอเบิก', key: 'reqDescription', sortable: false },
-  { title: 'สถานะการเบิก', key: 'reqstatus', sortable: true, width: '150px' },
+  { title: 'สถานะการเบิก', align: 'center' as const, key: 'reqstatus', sortable: true, width: '150px' },
+  { title: '', key: 'actions', align: 'center' as const, sortable: false, width: '100px' },
 ]
 
 interface TableItem {
   id: number
+  documentId: string
   createdAt: string
   reqDescription: string
   reqstatus: 'awaitPickup' | 'cancelled' | 'completed'
   pickupTime: string | null
+  cancelTime?: string | null
   requisition_items: RequisitionItem[]
 }
 
@@ -136,10 +228,12 @@ interface TableItem {
 const tableItems = computed((): TableItem[] => {
   return requisitions.value.map(requisition => ({
     id: requisition.id,
+    documentId: requisition.documentId,
     createdAt: requisition.createdAt,
     reqDescription: requisition.reqDescription,
     reqstatus: requisition.reqstatus,
     pickupTime: requisition.pickupTime,
+    cancelTime: requisition.cancelTime,
     requisition_items: requisition.requisition_items
   }))
 })
@@ -278,6 +372,110 @@ const getStatusText = (status: string) => {
       return 'รับวัสดุแล้ว'
     default:
       return status
+  }
+}
+
+// Reactive variables for cancel dialog
+const showCancelDialog = ref(false)
+const selectedItemToCancel = ref<TableItem | null>(null)
+const cancelLoading = ref(false)
+
+// Function to open the cancel dialog
+const openCancelDialog = (item: TableItem) => {
+  selectedItemToCancel.value = item
+  showCancelDialog.value = true
+}
+
+// Function to close the cancel dialog
+const closeCancelDialog = () => {
+  selectedItemToCancel.value = null
+  showCancelDialog.value = false
+}
+
+// Function to confirm cancellation
+const confirmCancelRequisition = async () => {
+  if (!selectedItemToCancel.value) return
+  
+  const item = selectedItemToCancel.value
+  cancelLoading.value = true
+  try {
+    // Step 1-3: Process each requisition item to restore stock quantities
+    for (const reqItem of item.requisition_items) {
+      try {
+        // Step 1: Get requisition-item details with current stock quantity
+        const reqItemResponse = await fetch(
+          `${API_BASE_URL}/api/requisition-items/${reqItem.documentId}?populate[item][fields]=stockqnt`,
+          {
+            headers: {
+              Authorization: `Bearer ${API_BEARER_TOKEN}`
+            }
+          }
+        )
+        const reqItemData = await reqItemResponse.json()
+        
+        if (reqItemResponse.ok && reqItemData.data) {
+          // Step 2: Calculate new stock (current stock + requisition quantity)
+          const currentStock = reqItemData.data.item.stockqnt
+          const requisitionQuantity = reqItemData.data.quantity
+          const newStock = currentStock + requisitionQuantity
+          
+          // Step 3: Update item's stock quantity
+          const itemDocumentId = reqItemData.data.item.documentId
+          const updateStockResponse = await fetch(
+            `${API_BASE_URL}/api/items/${itemDocumentId}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${API_BEARER_TOKEN}`
+              },
+              body: JSON.stringify({
+                data: {
+                  stockqnt: newStock
+                }
+              })
+            }
+          )
+          
+          if (updateStockResponse.ok) {
+            console.log(`Stock updated for item ${itemDocumentId}: ${currentStock} + ${requisitionQuantity} = ${newStock}`)
+          } else {
+            console.error(`Failed to update stock for item ${itemDocumentId}`)
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing requisition item ${reqItem.documentId}:`, error)
+      }
+    }
+    
+    // Step 4: Update requisition status to cancelled
+    const currentTime = new Date().toISOString()
+    const response = await fetch(`${API_BASE_URL}/api/requisitions/${item.documentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_BEARER_TOKEN}`
+      },
+      body: JSON.stringify({
+        data: {
+          reqstatus: "cancelled",
+          cancelTime: currentTime,
+        }
+      })
+    })
+    
+    if (response.ok) {
+      console.log('Requisition cancelled successfully')
+      // Refresh the data to update the table
+      await fetchAcquisitionHistory()
+      closeCancelDialog()
+    } else {
+      console.error('Failed to cancel requisition')
+    }
+  } catch (error) {
+    console.error('Error cancelling requisition:', error)
+  } finally {
+    cancelLoading.value = false
   }
 }
 
