@@ -15,16 +15,18 @@
           :items-per-page="10"
         >
           <template v-slot:item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
+            <v-chip size="small">
+              {{ formatDate(item.createdAt) }}
+            </v-chip>
           </template>
           
           <template v-slot:item.pickupTime="{ item }">
-            <span v-if="item.reqstatus === 'completed' && item.pickupTime">
+            <v-chip v-if="item.reqstatus === 'completed' && item.pickupTime" size="small" color="blue">
               {{ formatDate(item.pickupTime) }}
-            </span>
-            <span v-else-if="item.reqstatus === 'cancelled' && item.cancelTime">
+            </v-chip>
+            <v-chip v-else-if="item.reqstatus === 'cancelled' && item.cancelTime" size="small" color="red">
               {{ formatDate(item.cancelTime) }}
-            </span>
+            </v-chip>
             <span v-else>-</span>
           </template>
           
