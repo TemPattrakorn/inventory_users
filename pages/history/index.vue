@@ -1,8 +1,10 @@
 <template>
   <div style="background-color: #F5F5F5; min-height: 100%">
     <v-container class="mx-auto pa-4">
-      <v-card class="pa-6" rounded="lg">
-        <v-card-title class="text-h5 mb-4">ประวัติการเบิกวัสดุ</v-card-title>
+      <v-card rounded="lg">
+        <v-card-title class="text-h5 pa-4"
+        >ประวัติการเบิกวัสดุ
+        </v-card-title>
         
         <v-data-table
           :headers="headers"
@@ -21,13 +23,13 @@
           </template>
           
           <template v-slot:item.reqstatus="{ item }">
-            <v-chip
-              :color="getStatusColor(item.reqstatus)"
-              size="small"
-              variant="flat"
-            >
+            <div class="d-flex justify-center">
+              <v-chip
+                :color="getStatusColor(item.reqstatus)"
+              >
               {{ getStatusText(item.reqstatus) }}
-            </v-chip>
+              </v-chip>
+            </div>
           </template>
           
           <template v-slot:item.reqDescription="{ item }">
@@ -113,8 +115,8 @@ const userDocumentId = ref('')
 const loadingItems = ref(false)
 
 const headers = [
-  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true, width: '150px' },
-  { title: 'วันที่รับ', key: 'pickupTime', sortable: true, width: '150px' },
+  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true, width: '160px' },
+  { title: 'วันที่รับ/วันที่ยกเลิก', key: 'pickupTime', sortable: true, width: '160px' },
   { title: 'รายการ', key: 'items', sortable: false },
   { title: 'จำนวน', key: 'quantities', sortable: false },
   { title: 'เหตุผลที่ขอเบิก', key: 'reqDescription', sortable: false },
@@ -259,7 +261,7 @@ const getStatusColor = (status: string) => {
     case 'cancelled':
       return 'red'
     case 'completed':
-      return 'green'
+      return 'blue'
     default:
       return 'grey'
   }

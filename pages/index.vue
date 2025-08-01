@@ -66,9 +66,11 @@
                 variant="elevated" 
                 block 
                 rounded="lg"
-                :disabled="basket.length === 0"
+                :disabled="basket.length === 0 || isProcessing"
+                :loading="isProcessing"
+                @click="processAcquisition"
               >
-                ส่งคำขอเบิก ({{ basket.length }} รายการ)
+                {{ isProcessing ? 'กำลังประมวลผล...' : `ส่งคำขอเบิก (${basket.length} รายการ)` }}
               </v-btn>
             </div>
           </div>
@@ -124,6 +126,8 @@ const selectedCategory = ref('');
 const categories = ref<string[]>([]);
 const basket = ref<BasketItem[]>([]);
 const reqDescription = ref('');
+const isProcessing = ref(false);
+const userDocumentId = ref('');
 
 // Computed property for filtered items based on search query and category
 const filteredItems = computed(() => {
@@ -205,8 +209,149 @@ const fetchData = async () => {
   }
 };
 
+// Function to get user document ID from localStorage
+const getUserDocumentId = () => {
+  if (process.client) {
+    const userProfile = localStorage.getItem('userProfile')
+    if (userProfile) {
+      const profile = JSON.parse(userProfile)
+      return profile.documentId || profile.id?.toString()
+    }
+  }
+  return null
+}
+
+// Function to process acquisition
+const processAcquisition = async () => {
+  if (isProcessing.value) return;
+  isProcessing.value = true;
+
+  try {
+    const requisitionItemIds: string[] = [];
+
+    // Process each item in the basket
+    for (const basketItem of basket.value) {
+      const { item, acquisitionQuantity } = basketItem;
+      
+      // Step 1: Fetch current stockqnt for the item
+      const fetchResponse = await fetch(`${API_BASE_URL}/api/items/${item.documentId}?fields=stockqnt`, {
+        headers: {
+          Authorization: `Bearer ${API_BEARER_TOKEN}`
+        }
+      });
+
+      if (!fetchResponse.ok) {
+        throw new Error(`Failed to fetch current stock for item ${item.name}`);
+      }
+
+      const fetchData = await fetchResponse.json();
+      const currentStock = fetchData.data.stockqnt;
+
+      // Step 2: Calculate new stock quantity
+      const newStockQuantity = currentStock - acquisitionQuantity;
+
+      // Validate that stock won't go below 0
+      if (newStockQuantity < 0) {
+        throw new Error(`Not enough stock for item ${item.name}. Available: ${currentStock}, Requested: ${acquisitionQuantity}`);
+      }
+
+      // Step 3: Update the item's stockqnt
+      const updateResponse = await fetch(`${API_BASE_URL}/api/items/${item.documentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${API_BEARER_TOKEN}`
+        },
+        body: JSON.stringify({
+          data: {
+            stockqnt: newStockQuantity
+          }
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error(`Failed to update stock for item ${item.name}`);
+      }
+
+      console.log(`Updated ${item.name}: ${currentStock} -> ${newStockQuantity}`);
+
+      // Step 4: Create requisition-item
+      const requisitionItemResponse = await fetch(`${API_BASE_URL}/api/requisition-items/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${API_BEARER_TOKEN}`
+        },
+        body: JSON.stringify({
+          data: {
+            quantity: acquisitionQuantity,
+            item: item.documentId
+          }
+        })
+      });
+
+      if (!requisitionItemResponse.ok) {
+        throw new Error(`Failed to create requisition-item for ${item.name}`);
+      }
+
+      const requisitionItemData = await requisitionItemResponse.json();
+      const requisitionItemDocumentId = requisitionItemData.data.documentId;
+      requisitionItemIds.push(requisitionItemDocumentId);
+
+      console.log(`Created requisition-item for ${item.name}: ${requisitionItemDocumentId}`);
+    }
+
+    // Step 5: Create the final requisition
+    if (!userDocumentId.value) {
+      throw new Error('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+    }
+    
+    const requisitionResponse = await fetch(`${API_BASE_URL}/api/requisitions/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_BEARER_TOKEN}`
+      },
+      body: JSON.stringify({
+        data: {
+          reqstatus: 'awaitPickup',
+          inventory_user: userDocumentId.value,
+          requisition_items: requisitionItemIds,
+          reqDescription: reqDescription.value || ''
+        }
+      })
+    });
+
+    if (!requisitionResponse.ok) {
+      throw new Error('Failed to create requisition');
+    }
+
+    const requisitionData = await requisitionResponse.json();
+    console.log('Created requisition:', requisitionData.data.documentId);
+
+    // Success - clear basket and form
+    alert('ส่งคำขอเบิกสำเร็จ!');
+    basket.value = [];
+    reqDescription.value = '';
+    
+    // Refresh the items list to show updated stock quantities
+    await fetchData();
+
+  } catch (error) {
+    console.error('Error processing acquisition:', error);
+    const errorMessage = error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ';
+    alert(`เกิดข้อผิดพลาด: ${errorMessage}`);
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
 // Fetch data on component mount
 onMounted(() => {
+  userDocumentId.value = getUserDocumentId();
+  if (!userDocumentId.value) {
+    console.error('Unable to get user document ID from localStorage');
+  }
   fetchData();
 });
 
