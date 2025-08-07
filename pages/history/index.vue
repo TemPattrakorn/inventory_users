@@ -1,11 +1,11 @@
 <template>
   <div style="background-color: #F5F5F5; min-height: 100%">
-    <v-container class="mx-auto pa-4" style="max-width: 1280px;">
+    <v-container fluid class="mx-auto pa-4">
       <v-card rounded="lg">
         <v-card-title class="text-h5 pa-4"
         >ประวัติการเบิกวัสดุ
         </v-card-title>
-        
+
         <v-data-table
           :headers="headers"
           :items="tableItems"
@@ -16,17 +16,17 @@
         >
           <template v-slot:item.createdAt="{ item }">
             <v-chip size="small">
-              {{ formatDate(item.createdAt) }}
-            </v-chip>
+                {{ formatDate(item.createdAt) }}
+              </v-chip>
           </template>
           
           <template v-slot:item.pickupTime="{ item }">
             <v-chip v-if="item.reqstatus === 'completed' && item.pickupTime" size="small" color="blue">
-              {{ formatDate(item.pickupTime) }}
-            </v-chip>
+                {{ formatDate(item.pickupTime) }}
+              </v-chip>
             <v-chip v-else-if="item.reqstatus === 'cancelled' && item.cancelTime" size="small" color="red">
-              {{ formatDate(item.cancelTime) }}
-            </v-chip>
+                {{ formatDate(item.cancelTime) }}
+              </v-chip>
             <span v-else>-</span>
           </template>
           
@@ -35,31 +35,25 @@
               <v-chip
                 :color="getStatusColor(item.reqstatus)"
               >
-              {{ getStatusText(item.reqstatus) }}
+                {{ getStatusText(item.reqstatus) }}
               </v-chip>
             </div>
           </template>
           
           <template v-slot:item.reqDescription="{ item }">
             <div style="max-width: 200px; white-space: normal; word-wrap: break-word;">
-              {{ item.reqDescription || '-' }}
+                {{ item.reqDescription || '-' }}
             </div>
           </template>
           
-                     <template v-slot:item.items="{ item }">
-             <div>
-               <div v-for="reqItem in item.requisition_items" :key="reqItem.id" class="mb-1">
-                 <span v-if="loadingItems">กำลังโหลด...</span>
-                 <span v-else>{{ reqItem.itemName || 'ไม่พบชื่อรายการ' }}</span>
-               </div>
-             </div>
-           </template>
-          
-                               <template v-slot:item.quantities="{ item }">
+          <template v-slot:item.items="{ item }">
             <div>
               <div v-for="reqItem in item.requisition_items" :key="reqItem.id" class="mb-1">
                 <span v-if="loadingItems">กำลังโหลด...</span>
-                <span v-else>{{ reqItem.quantity }} {{ reqItem.unit || '' }}</span>
+                <template v-else>
+                  <span class="font-weight-medium">{{ reqItem.itemName || 'ไม่พบชื่อรายการ' }}</span>
+                  <span class="text-grey-darken-1"> x {{ reqItem.quantity }} {{ reqItem.unit || '' }}</span>
+                </template>
               </div>
             </div>
           </template>
@@ -67,7 +61,7 @@
           <template v-slot:item.actions="{ item }">
             <v-menu v-if="item.reqstatus === 'awaitPickup'">
               <template v-slot:activator="{ props }">
-                <v-btn
+              <v-btn
                   icon="mdi-dots-vertical"
                   variant="text"
                   size="small"
@@ -77,12 +71,12 @@
               <v-list>
                 <v-list-item>
                   <v-btn
-                    color="error"
+                color="error"
                     variant="text"
-                    @click="openCancelDialog(item)"
-                  >
+                @click="openCancelDialog(item)"
+              >
                     ยกเลิกคำขอเบิกวัสดุ
-                  </v-btn>
+              </v-btn>
                 </v-list-item>
               </v-list>
             </v-menu>
@@ -109,29 +103,29 @@
         <v-card-text>
           <div>
             <p class="text-body-2 mb-4">วันที่ขอเบิก: {{ selectedItemToCancel ? formatDate(selectedItemToCancel.createdAt) : '' }}</p>
-          </div>
-          
+            </div>
+            
           <v-divider class="mb-3"/>
           
           <div v-if="selectedItemToCancel">
             <h6 class="text-h6 mb-2">รายการวัสดุในคำขอเบิก:</h6>
             <v-list density="compact" class="bg-grey-lighten-4 rounded">
-              <v-list-item
-                v-for="(reqItem, index) in selectedItemToCancel.requisition_items"
-                :key="reqItem.id"
+                <v-list-item
+                  v-for="(reqItem, index) in selectedItemToCancel.requisition_items"
+                  :key="reqItem.id"
                 :class="{ 'border-b': index < selectedItemToCancel.requisition_items.length - 1 }"
               >
                 <v-list-item-title class="text-body-2">
-                  {{ reqItem.itemName || 'ไม่พบชื่อรายการ' }}
-                </v-list-item-title>
-                
-                <template v-slot:append>
+                    {{ reqItem.itemName || 'ไม่พบชื่อรายการ' }}
+                  </v-list-item-title>
+                  
+                  <template v-slot:append>
                   <v-chip size="small">
-                    {{ reqItem.quantity }} {{ reqItem.unit || '' }}
-                  </v-chip>
-                </template>
-              </v-list-item>
-            </v-list>
+                      {{ reqItem.quantity }} {{ reqItem.unit || '' }}
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </v-list>
           </div>
         </v-card-text>
         
@@ -139,12 +133,13 @@
           <v-spacer></v-spacer>
           <v-btn
             color="grey"
-            variant="outlined"
+            variant="tonal"
             @click="closeCancelDialog"
           >
             ยกเลิก
           </v-btn>
           <v-btn
+            class="mr-2"
             color="error"
             variant="elevated"
             @click="confirmCancelRequisition"
@@ -206,13 +201,12 @@ const userDocumentId = ref('')
 const loadingItems = ref(false)
 
 const headers = [
-  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true, width: '160px' },
-  { title: 'วันที่รับ/วันที่ยกเลิก', key: 'pickupTime', sortable: true, width: '160px' },
+  { title: 'วันที่ขอเบิก', key: 'createdAt', sortable: true },
+  { title: 'วันที่รับ/วันที่ยกเลิก', key: 'pickupTime', sortable: true },
   { title: 'รายการ', key: 'items', sortable: false },
-  { title: 'จำนวน', key: 'quantities', sortable: false },
-  { title: 'เหตุผลที่ขอเบิก', key: 'reqDescription', sortable: false },
-  { title: 'สถานะการเบิก', align: 'center' as const, key: 'reqstatus', sortable: true, width: '150px' },
-  { title: '', key: 'actions', align: 'center' as const, sortable: false, width: '100px' },
+  { title: 'เพื่อใช้ในงาน', key: 'reqDescription', sortable: false },
+  { title: 'สถานะการเบิก', align: 'center' as const, key: 'reqstatus', sortable: true },
+  { title: '', key: 'actions', align: 'center' as const, sortable: false },
 ]
 
 interface TableItem {

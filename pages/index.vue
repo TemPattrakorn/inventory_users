@@ -37,28 +37,59 @@
         </v-row>
       </v-col>
       <v-col cols="3">
-        <v-card class="pa-4" rounded="lg">
-          <v-card-title class="text-h6 mb-4">รายการเบิกใช้วัสดุ</v-card-title>
-          <div v-if="basket.length === 0" class="text-center text-medium-emphasis">
-            <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-cart-outline</v-icon>
-            <p>ไม่มีข้อมูล</p>
+        <v-card class="pa-0 sticky-card d-flex flex-column" rounded="lg" style="position: sticky; top: 20px; max-height: calc(100vh - 40px);">
+          <!-- Fixed Header -->
+          <v-card-title class="text-h6 mb-0 pa-4 pb-2 flex-shrink-0">รายการเบิกใช้วัสดุ</v-card-title>
+          
+          <!-- Scrollable Content Area -->
+          <div class="flex-grow-1" style="overflow-y: auto; min-height: 0;">
+            <div v-if="basket.length === 0" class="text-center text-medium-emphasis pa-4">
+              <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-cart-outline</v-icon>
+              <p>ไม่มีข้อมูล</p>
+            </div>
+            <div v-else class="pa-4 pt-2">
+              <BasketItemCard
+                v-for="basketItem in basket"
+                :key="basketItem.item.id"
+                :basket-item="basketItem"
+                @remove-item="removeItemFromBasket"
+              />
+            </div>
           </div>
-          <div v-else>
-            <BasketItemCard
-              v-for="basketItem in basket"
-              :key="basketItem.item.id"
-              :basket-item="basketItem"
-              @remove-item="removeItemFromBasket"
-            />
+          
+          <!-- Fixed Footer -->
+          <div v-if="basket.length > 0" class="flex-shrink-0 pa-4 pt-0">
             <v-divider class="my-4"></v-divider>
             <div>
               <v-textarea
+                ref="descriptionField"
                 v-model="reqDescription"
-                label="หมายเหตุ/เหตุผลในการเบิก"
                 rows="3"
                 maxlength="255"
                 auto-grow
-              ></v-textarea>
+                required
+                clearable
+                :rules="[v => (!!v && v.trim().length > 0)]"
+              >
+                <template #label>
+                  เพื่อใช้ในงาน <span class="text-red">*</span>
+                </template>
+              </v-textarea>
+            </div>
+            <div class="mb-4">
+              <div class="d-flex flex-wrap ga-2">
+                <v-chip
+                  v-for="template in descriptionTemplates"
+                  :key="template"
+                  size="small"
+                  variant="outlined"
+                  color="grey"
+                  clickable
+                  @click="addDescriptionTemplate(template)"
+                >
+                  {{ template }}
+                </v-chip>
+              </div>
             </div>
             <div class="text-center">
               <v-btn 
@@ -128,6 +159,13 @@ const basket = ref<BasketItem[]>([]);
 const reqDescription = ref('');
 const isProcessing = ref(false);
 const userDocumentId = ref('');
+const descriptionField = ref<any>(null);
+const descriptionTemplates = ref([
+  'ใช้ในการสอน',
+  'กิจกรรมภายในภาควิชา',
+  'งานสำนักงาน',
+  'ใช้งานทำความสะอาด'
+]);
 
 // Computed property for filtered items based on search query and category
 const filteredItems = computed(() => {
@@ -188,24 +226,67 @@ const removeItemFromBasket = (itemId: number) => {
   }
 };
 
+// Function to add description template
+const addDescriptionTemplate = (template: string) => {
+  if (reqDescription.value.trim() === '') {
+    reqDescription.value = template;
+  } else {
+    reqDescription.value = reqDescription.value.trim() + ', ' + template;
+  }
+};
+
 // Function to fetch data using GET method with authentication
 const fetchData = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/items?populate=*`, {
+    const pageSize = 100; // Increase page size to load more items at once
+    
+    // Fetch first page
+    const response = await fetch(`${API_BASE_URL}/api/items?populate=*&pagination[page]=1&pagination[pageSize]=${pageSize}`, {
       headers: {
         Authorization: `Bearer ${API_BEARER_TOKEN}`
       }
     });
-    if (response.ok) {
-      // Accessing the items from the 'data' field in the API response
-      const data = await response.json();
-      items.value = data.data;
-       // Filter out any non-string values and ensure all categories are strings
-      const uniqueCategories = [...new Set(data.data.map((item: Item) => item.category))];
-      categories.value = uniqueCategories.filter((category) => typeof category === 'string' && category.trim() !== '') as string[];
-    } else {
-      console.error('Failed to fetch data');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch items: ${response.statusText}`);
     }
+    
+    const firstPageData = await response.json();
+    let allItems = firstPageData.data;
+    const pagination = firstPageData.meta.pagination;
+    
+    // If there are multiple pages, fetch them all
+    if (pagination.pageCount > 1) {
+      const pagePromises = [];
+      for (let page = 2; page <= pagination.pageCount; page++) {
+        pagePromises.push(
+          fetch(`${API_BASE_URL}/api/items?populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`, {
+            headers: {
+              Authorization: `Bearer ${API_BEARER_TOKEN}`
+            }
+          }).then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch page ${page}`);
+            return res.json();
+          })
+        );
+      }
+      
+      const additionalPagesData = await Promise.all(pagePromises);
+      additionalPagesData.forEach(pageData => {
+        if (pageData && pageData.data) {
+          allItems = [...allItems, ...pageData.data];
+        }
+      });
+    }
+    
+    // Set the items with all fetched data
+    items.value = allItems;
+    
+    // Filter out any non-string values and ensure all categories are strings
+    const uniqueCategories = [...new Set(allItems.map((item: Item) => item.category))];
+    categories.value = uniqueCategories.filter((category) => typeof category === 'string' && category.trim() !== '') as string[];
+    
+    console.log(`Loaded ${allItems.length} items from ${pagination.pageCount} page(s)`);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
@@ -226,6 +307,16 @@ const getUserDocumentId = () => {
 // Function to process acquisition
 const processAcquisition = async () => {
   if (isProcessing.value) return;
+  
+  // Validate description field first
+  if (!reqDescription.value.trim()) {
+    // Trigger validation on the textarea
+    if (descriptionField.value) {
+      descriptionField.value.validate();
+    }
+    return;
+  }
+  
   isProcessing.value = true;
 
   try {
